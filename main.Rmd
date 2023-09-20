@@ -1,0 +1,500 @@
+---
+title: "Grupo N5 - PG3 - Entrega Final"
+author: "Gabriel de Jesus, Gabrielada Silva, Helton de Souza e Matheus Ramos"
+output:
+  html_document: default
+  pdf_document: default
+---
+**Nome Completo, RA e E-mail**  
+Gabriel Felipe Romano de Jesus - 11201920436 - gabriel.jesus@aluno.ufabc.edu.br  
+Gabriela Vasconcelos Silvestre da Silva - 11201921847 - vasconcelos.gabriela@aluno.ufabc.edu.br  
+Helton Abrantes de Souza - 11202130113 - helton.abrantes@aluno.ufabc.edu.br  
+Matheus Araujo Valansuela Ramos - 11201920903 - ramos.valansuela@aluno.ufabc.edu.br  
+  
+# Artigo Escolhido:  
+  
+**A practical test of the link between perceived identifability and prosociality with two feld studies**
+
+**LINK:**  
+https://www.nature.com/articles/s41598-022-17248-2#Sec5   
+  
+**BASE DE DADOS:**  
+https://doi.org/10.17605/OSF.IO/CRZM3  
+  
+# Descrição dos Experimentos:    
+
+Este trabalho abrange o campo da psicologia social e preocupa-se, portanto, em compreender a forma como os indivíduos se comportam em sociedade, seja influenciando ou sendo influenciado por ela. E muitas vezes podemos nos situar em circunstâncias que existem dentro da própria cultura brasileira mas que, de certa maneira, acabam sendo desconfortáveis, como por exemplo, o ato de recusar ajuda a alguém. Esta negação pode provocar - à pessoa que o faz - reações negativas na sua reputação e imagem, em decorrência da reprovação social, que aponta esta atitude como sendo egoísta. Por outro lado, o ato de ajudar, que é considerado um comportamento pró-social, é exaltado e valorizado na sociedade. Porém, sabe-se que também existe um custo para o benfeitor, seja por meio da abdicação de tempo, dinheiro ou esforço. Mas ainda que alguns benefícios sejam retribuídos socialmente, fisicamente ou psicologicamente, em uma balança que teria como pesos estes extremos, as consequências seriam sobrepostas às escolhas e se os custos percebidos superarem os benefícios, as pessoas normalmente optam por não fornecer ajuda. Por fim, é importante ressaltar o conceito da identificabilidade reduzida (percebida): neste caso, posição de maior anonimato pelo fato de o indivíduo estar menos identificável, proporcionando maior sensação de segurança e isenção de sentimentos como culpa e responsabilidade por algo ou alguém. A proposta do texto base escolhido vem de encontro com a redução dos riscos da reprovação social ao negar ajuda, o que é mais provável de acontecer na condição em que os indivíduos encontram-se menos identificáveis. Em outras palavras, busca associar o uso de artefatos que cobrem áreas do rosto com uma maior propensão a cometer comportamentos anti normativos.   
+  
+A metodologia envolve duas etapas: na primeira, os voluntários - pessoas selecionadas “a dedo” que utilizavam ou não máscaras -  foram submetidos a um longo questionário após consentimento de participação na pesquisa. Foi contabilizado quantos indivíduos se recusaram a responder à pesquisa em cada grupo (grupos com máscara x grupo sem máscara). Em ambos os estudos, foi comparado o número de perguntas respondidas por indivíduos que usavam máscara facial e indivíduos que não a usavam. 
+Não tendo observado nenhuma diferença significativa no primeiro estudo, foi realizada a segunda etapa: foi levantada a hipótese de que os participantes que usavam máscara e os que não usavam teriam níveis equivalentes de comportamentos pró-sociais e o mesmo resultado de equivalência foi esperado para a identificabilidade percebida. 
+
+
+# Ánalise do grupo:  
+
+# Estudo 1
+
+**Figura 1 e calculos iniciais**  
+Nesta etapa inicial, realizamos os cálculos preliminares do experimento e os comparamos com os valores encontrados na pesquisa. Concluindo esta fase,  desenvolvemos o primeiro gráfico do estudo.  
+
+Na analise do artigo base, o autor realiza algumas correções nos dados para garantir que trabalharemos com os tidos de dados corretos, por exemplo, a variavél idade precisa ser numérica, então vamos "forçar" a correção deste dados. Aqui nesta parte, serão realizadas manipulações identicas as realizadas no artigo fonte, para garantir que a analise final esteja tratando com o mesmo tipo de dado, na mesma formatação.  
+
+```{r}
+#Importando as bibliotecas 
+options(warn = -1)
+library(ggplot2)
+library(ggridges)
+library(readxl) 
+library(forcats)
+
+#Carregando a base de dados
+base <- read_excel("D:/Codes/iie-project/face_mask_study_1.xlsx")
+
+#Alterando os tipos de dados das colunas utilizadas
+base$participant <- as.character(base$participant)
+base$`original id`<-as.character(base$`original id`)
+base$ra<-as.character(base$ra)
+base$`ra gender`<-as.character(base$`ra gender`)
+base$mask<-as.character(base$mask)
+base$gender<-as.character(base$gender)
+base$age<-as.numeric(base$age)
+base$date<-as.character(base$date)
+base$time<-as.character(base$time)
+base$score<-as.numeric(base$score)
+base$temperature<-as.numeric(base$temperature)
+base$`gender dyade`<-as.character(base$`gender dyade`)
+base$psychology<-as.character(base$psychology)
+base$student<-as.character(base$student)
+
+```
+  
+Precisaremos também realizar uma limpeza nos dados, por exemplo, participantes que responderam um idade inferior a 18 anos no formulário, não podem ser considerados. Outro ponto de atenção, é que precisaremos remover da nossa base de analise os participaram que mudaram sua condição de usa de mascara ao longo do experimento, por exemplo, começaram sem mascara e depois colocaram, ou o inverso, mantendo somente os participantes que tiveram um uso de mascara constante, pelo sim ou pelo não.  
+
+```{r}
+#Retirando casos fora da pesquisa
+index <- base$age >= 18 | is.na(base$age)
+base <- base[index, ]
+
+#Retirando os casos em que mudaram de lado
+index_3 <- base$mask != "yes-no" | is.na(base$mask)
+base_2 <- base[index_3, ]
+index_4 <- base_2$mask != "no-yes" | is.na(base_2$mask)
+base_2 <- base_2[index_4, ]
+
+DF_fig1 <- base_2[, c("mask", "score"), drop = FALSE]
+
+# Plotando o grafico utilizando as bibliotecas ggplot2 e ggridges
+ggplot(DF_fig1, aes(x = score, y = forcats::fct_rev(mask))) +
+  geom_density_ridges(scale = 0.75, alpha = 0.6, position = position_points_jitter(width = 0.2, height = 0.05), fill = "#999999") +
+  geom_point(aes(y = forcats::fct_rev(mask)), position = position_jitter(height = 0.1), alpha = 0.5, color = "black") +
+  scale_x_continuous(limits = c(0, 102)) +
+  theme_minimal() +
+  labs(x = "Number os questions answered", y = "Mask") +
+  theme(panel.background = element_rect(fill = "#f0f0f0"),
+        plot.background = element_rect(fill = "#f0f0f0"),
+        axis.line = element_line(color = "black"))
+```
+   
+**Figura original feita pelo autor do artigo** 
+![foto_est](41598_2022_17248_Fig1_HTML.png){width=75%}   
+
+**Analogia**   
+Na elaboração do gráfico, enfrentamos dificuldades ao posicionar os pontos mais abaixo do eixo X. No entanto, esses pontos assemelham-se à figura criada pelo autor do artigo. Observamos também a mesma quantidade de pontos ao longo do eixo X.  
+```{r}
+#Covertendo a coluna mask em fator e definindo a ordem dos níveis do fator
+base_2$mask <- as.factor(base_2$mask)
+base_2$mask <- factor (base_2$mask, levels = rev (levels(base_2$mask)))
+
+```  
+  
+Vamos começar com as manipulações, no artigo original o autor realiza suas análises baseadas no teste t, muito visto em aula, utilizando funções nativas do R. Entretanto, durante o decorrer do artigo e do código, não foi nos informado acerca da confirmação da normalidade da amostra (o autor usa a premissa de que o tamanho de sua amostra independeria da normalidade), assim, decidimos realizar a nossa análise via um teste que não possua a premissa de normalidade, neste caso, via reamostragem por Bootstrap. Iniciaremos mais uma vez trabalhando os dados para facilitar a lógica no momento de formular o código para o Bootstrap.
+
+```{r}
+#Criando as bases das pessoas que respoderam sim e nao 
+masc_sim <- subset (base_2, base_2$mask != "no")
+masc_nao <- subset (base_2, base_2$mask != "yes")
+
+#Criando vetores dos scores de cada base
+vetorsim <- masc_sim$score
+vetornao <- masc_nao$score
+
+#Criando as medias dos scores
+media_sim <- mean(vetorsim)
+media_nao <- mean(vetornao)
+
+#Criando os devios padroes
+sd_sim <- sd(vetorsim)
+sd_nao <- sd(vetornao)
+
+#adendo útil, mostrando a diferença real observada na amostra
+diff_obs = media_sim - media_nao
+diff_obs
+
+#Calculando o d observador
+d_obs = (media_sim - media_nao)/sqrt((sd_sim^2 +sd_nao^2)/2)
+d_obs
+```  
+  
+Vamos então realizar o Bootstrap e verificar se é condizente com o obtido no artigo base.Lembrando que nossa hipótese seria que a diferença entre as médias é insignificante, ou seja, igual a 0.  
+```{r}
+#Criando os vetores vazios para começar a salvar os valores do bootstrap
+media_sim_BS <- vector()
+media_nao_BS <- vector()
+sd_sim_BS <- vector()
+sd_nao_BS <- vector()
+hip <- vector()
+
+#Fazendo 10000 testes e salvando os resultados nas bases feitas anteriormente
+for(i in 1:10000){
+  vetorsim_BS <- sample(vetorsim, length(vetorsim), replace = TRUE)
+  vetornao_BS <- sample(vetornao, length(vetornao), replace = TRUE)
+  media_sim_BS[i] <- mean(vetorsim_BS)
+  media_nao_BS[i] <- mean(vetornao_BS)
+  sd_sim_BS[i] <- sd(vetorsim_BS)
+  sd_nao_BS[i] <- sd(vetornao_BS)
+}
+hip <- (media_sim_BS - media_nao_BS)
+
+hip_cohen <- (media_sim_BS - media_nao_BS)/sqrt((sd_sim_BS^2 +sd_nao_BS^2)/2)
+
+#Analisando como unicaudal (igual ao artigo)
+pvalor_BSu <- mean((hip)>=0)
+if(pvalor_BSu>1){
+  pvalor_BSu = mean((hip)<=0)
+}
+pvalor_BSu
+
+#Calculando o IC por Bootstrap
+IC_BSu <- quantile(hip, c(0.95))
+IC_BSu
+
+#Analisando como bicaudal
+pvalor_BSb <- 2*mean((hip)>=0)
+if(pvalor_BSb>1){
+  pvalor_BSb = 2*mean((hip)<=0)
+}
+pvalor_BSb
+
+#Verificando o IC por BootStrap
+IC_BSb <- quantile(hip, c(0.025 , 0.975))
+IC_BSb
+
+#Verificando o IC por Cohen
+IC_cohen_BS <- quantile(hip_cohen, c(0.025 , 0.975))
+IC_cohen_BS
+
+#Verificando o IC por Tost
+IC_TOST_BS <- quantile(hip_cohen, c(0.05 , 0.95))
+IC_TOST_BS
+```  
+  
+**Figura 2**   
+ Realizamos nessa etapa os calculos de IC_cohen e IC_TOST, por fim a construção da figura 2.
+   
+```{r}
+# Carregar o pacote ggplot2
+library(ggplot2)
+
+# Dados fictícios com os valores de intervalo de confiança
+dados <- data.frame(
+  x = c(1.24, 2),
+  lower_ci1 = c(-0.09313167, -0.1195217),
+  upper_ci1 = c(0.23274456, 0.2631030)
+)
+
+# Custom labels for the error bars
+interval_labels <- c("TOST \n 90% IC", "Prosocial behavior\n d = 0.068\n t-test (two-tailed)\n 95% IC")
+
+# Criar o gráfico com os intervalos de confiança e eixos girados
+grafico <- ggplot(dados) +
+  scale_x_continuous(limits = c(0, 2.5), breaks = c(1.75, 2)) +
+  scale_y_continuous(limits = c(-0.4, 0.4), breaks = c(-0.363, -0.24, 0, 0.24, 0.363)) +
+  labs(x = "", y = "Standardized mean difference (Cohen's d)") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.title.y = element_blank(),  #Removendo o titulo do eixo y
+        axis.text.y = element_blank(),   #Removendo os rótulos do eixo y
+        axis.ticks.y = element_blank(),
+        axis.line.x.bottom = element_line(size = 1.5),
+        #Ajustando as margens do gráfico
+        plot.margin = margin(t = 10, r = 10, b = 10, l = 10)) +  
+  theme(panel.grid = element_blank()) +
+  coord_flip() +
+  #Adicionando o fundo cinza
+  geom_rect(aes(xmin = 0, xmax = 2.5, ymin = -0.24, ymax = 0.24), fill = "gray", alpha = 0.6) + 
+  #Adicionando o fundo cinza
+  geom_rect(aes(xmin = 0, xmax = 2.5, ymin = -0.363, ymax = -0.24), fill = "gray", alpha = 0.3) + 
+  geom_rect(aes(xmin = 0, xmax = 2.5, ymin = 0.24, ymax = 0.363), fill = "gray", alpha = 0.3) +
+  geom_segment(aes(x = x, xend = x, y = lower_ci1, yend = upper_ci1), color = "black", linewidth = 1.5) +
+  geom_errorbar(aes(x = x, ymin = lower_ci1, ymax = upper_ci1), color = "black", width = 0.1, position = position_dodge(width = 0.025)) +
+  #Adicionando a linha tracejada no zero
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+  #Alinhando rótulos com barras de erro menores
+  geom_text(aes(x = x - 0.15, y = lower_ci1 - 0.03, label = round(lower_ci1, 3)), vjust = 0, position = position_dodge(width = 0.025), color = "black") + 
+  #Alinhando rótulos com barras de erro maiores
+  geom_text(aes(x = x - 0.15, y = upper_ci1 + 0.03, label = round(upper_ci1, 3)), vjust = 0, position = position_dodge(width = 0.025), color = "black") + 
+  # Adicionando rótulos com uma fonte maior
+  geom_text(aes(x = x - 0.1, y = lower_ci1 - 0.15, label = interval_labels), vjust = 0, position = position_dodge(width = 0.025), color = "black", size = 5)  
+
+# Mostrar o gráfico
+print(grafico)
+```
+
+**Figura original feita pelo autor do artigo** 
+![foto_est](41598_2022_17248_Fig2_HTML.png){width=75%}  
+
+**Analogia**   
+Os valores obtidos nesta análise pós-processamento assemelham-se aos originais, apresentando os mesmos intervalos calculados pelo autor do artigo. Além disso, a representação gráfica construída iguala com a figura original.
+  
+O autor emprega o teste t unicaudal (como examinaremos em breve), porém, para a nossa análise usando o método de bootstrap, consideraremos ambas as abordagens.
+  
+**Valores de referência, retirados do artigo base:**  
+p-value = 0.7539  
+IC = -Inf 8.26659  
+  
+Para ambos os casos, unicaudal e bicaudal, obtvemos p-valores altos (maiores que os 5%), assim, caindo dentro do intervalo de confiança do Bootstrap. Vale observar, também, que o p valor obtido pelo bootstrap para a situação unicaudal é muito próximo ao apresentado pelo artigo. Nessas situações não rejeitaremos a hipótese de que a diferença entre as médias é igual a 0. Não temos evidencias suficientes para afirmar o contrário e, até o momento, os resultados são condizentes com o apresentado no artigo.  
+  
+**Diferença das médias encontrada no artigo = 2.432796**  
+Esse valor cai no intervalo de confiança encontrado para ambos os casos, unicaudal e bicaudal.  
+
+Para sanar uma ultima dúvida, decidimos por usar um teste não paramétrico nativo do R. A questão do tamanho da amostra ser suficiente ou não para desconsiderar a premissa de normalidade exigida pelo teste t continuou incomoda.    
+Vamos então testar a afirmação do autor aplicando um teste não paramétrico, considerando a nossa incerteza acerca da normalidade dos dados.
+
+```{r}
+a <- wilcox.test(vetorsim, vetornao ,  paired = FALSE)
+a
+```  
+  
+ O teste utilizado foi o Teste de Mann-Whitney (versão do wilcox test), que após realizado, ainda nos apresenta um p-valor alto, ou seja, não rejeitando a hipótese nula, condizente com o artigo. Entretando, o p valor encontrado por esse teste foi menor que o apresentado no artigo, feito por um teste paramétrico.  
+   
+**Comparando com valores encontrados:**    
+  
+Aqui está apresentado um código análogo ao usado pelo autor do artigo, trazendo dos valores citados anteriormente como referência.
+
+```{r}
+#Teste t realizado no artigo
+hyptest<-t.test (score~mask,
+        data = base_2,
+        alternative = "less",
+        var.equal = TRUE)
+hyptest
+```
+
+# Estudo 2 
+
+**Figura 3 e Estatísticas**  
+
+Os cálculos se assemelham significativamente aos passos adotados na etapa anterior, no entanto, desta vez foram incorporados a identificabilidade percebida (representados pelos fatores Q1, Q2, Q3 e Q4).
+```{r}
+# Carregar as bibliotecas
+library(ggplot2)
+
+#Carregando a base de dados
+DF1 <- read_excel("D:/Codes/iie-project/face_mask_study_2.xlsx")
+
+#Alterando os tipos de dados das colunas utilizadas
+DF1$participant <- as.character(DF1$participant)
+DF1$`original id`<-as.character(DF1$`original id`)
+DF1$ra<-as.character(DF1$ra)
+DF1$`ra gender`<-as.character(DF1$`ra gender`)
+DF1$mask<-as.character(DF1$mask)
+DF1$gender<-as.character(DF1$gender)
+DF1$age<-as.numeric(DF1$age)
+DF1$date<-as.character(DF1$date)
+DF1$time<-as.character(DF1$time)
+DF1$score<-as.numeric(DF1$score)
+DF1$Q1<-as.numeric(DF1$Q1)
+DF1$Q2<-as.numeric(DF1$Q2)
+DF1$Q3<-as.numeric(DF1$Q3)
+DF1$Q4<-as.numeric(DF1$Q4)
+DF1$temperature<-as.numeric(DF1$`average temperature`)
+DF1$`gender dyade`<-as.character(DF1$`gender dyade`)
+DF1$psychology<-as.character(DF1$psycho)
+DF1$student<-as.character(DF1$student)
+
+#Retirando os casos que ficaram fora da pesquisa
+DF1<- subset (DF1, DF1$participant != '191')
+DF1<- subset (DF1, DF1$participant != '218')
+DF1<- subset (DF1, DF1$participant != '271')
+DF1<- subset (DF1, DF1$participant != '291')
+DF1<- subset (DF1, DF1$participant != '413')
+DF1<- subset (DF1, DF1$participant != '577')
+DF1<- subset (DF1, DF1$participant != '1047')
+DF1<- subset (DF1, DF1$participant != '1054')
+DF1<- subset (DF1, DF1$participant != '1106')
+DF1<- subset (DF1, DF1$participant != '1737')
+DF1<- subset (DF1, DF1$participant != '1850')
+DF1<- subset (DF1, DF1$participant != '1872')
+DF1<- subset (DF1, DF1$participant != '2036')
+DF1<- subset (DF1, DF1$participant != '2482')
+DF1<- subset (DF1, DF1$participant != '4265')
+DF1<- subset (DF1, DF1$participant != '4306')
+DF1<- subset (DF1, DF1$participant != '5316')
+
+#Retirando os casos em que mudaram de lado
+DF2 <- subset (DF1, DF1$mask != "no-yes") 
+DF2 <- subset (DF2, DF2$mask != "yes-no")
+
+#Retirando os casos Nulos das respostas Q1,Q2,Q3,Q4
+DF3 <- DF2
+DF3 <- subset(DF3, !is.na(DF3$Q1))
+DF3 <- subset(DF3, !is.na(DF3$Q2))
+DF3 <- subset(DF3, !is.na(DF3$Q3))
+DF3 <- subset(DF3, !is.na(DF3$Q4))
+
+#Mundando a escala das respostas Q1 e Q3
+DF3$Q1 <- 6-DF3$Q1 
+DF3$Q3 <- 6-DF3$Q3
+
+# Calculando perceived score
+DF3$perc.id <- (DF3$Q1 + DF3$Q2 + DF3$Q3 + DF3$Q4)/4
+
+# Bootstrap paraperceived score
+masc_sim <- subset (DF3, DF3$mask != "no")
+masc_nao <- subset (DF3, DF3$mask != "yes")
+
+#Criando os vetores das respotas do Sim e Não
+vetorsim <- masc_sim$perc.id
+vetornao <- masc_nao$perc.id
+
+#Calculando a média da Base Sim e Não
+media_sim <- mean(vetorsim)
+media_nao <- mean(vetornao)
+
+#Calculando o desvio padrão da Base Sim e Não
+sd_sim <- sd(vetorsim)
+sd_nao <- sd(vetornao)
+
+#Calculando o d observado
+d_obs = (media_sim - media_nao)/sqrt((sd_sim^2 +sd_nao^2)/2)
+d_obs
+
+#Criando o vetores vazio para salvar os resultados do Bootstrap
+media_sim_BS <- vector()
+media_nao_BS <- vector()
+sd_sim_BS <- vector()
+sd_nao_BS <- vector()
+
+#Calculando o BootStrap
+for(i in 1:10000){
+  vetorsim_BS <- sample(vetorsim, length(vetorsim), replace = TRUE)
+  vetornao_BS <- sample(vetornao, length(vetornao), replace = TRUE)
+  media_sim_BS[i] <- mean(vetorsim_BS)
+  media_nao_BS[i] <- mean(vetornao_BS)
+  sd_sim_BS[i] <- sd(vetorsim_BS)
+  sd_nao_BS[i] <- sd(vetornao_BS)
+}
+
+hip_cohen <- (media_sim_BS - media_nao_BS)/sqrt((sd_sim_BS^2 +sd_nao_BS^2)/2)
+
+#Calculando o IC Cohen
+IC_cohen_BS <- quantile(hip_cohen, c(0.025 , 0.975))
+IC_cohen_BS
+
+#Calculando o IC TOST
+IC_TOST_BS <- quantile(hip_cohen, c(0.05 , 0.95))
+IC_TOST_BS
+
+# Seguindo para o prosocial score
+masc_sim <- subset (DF2, DF2$mask != "no")
+masc_nao <- subset (DF2, DF2$mask != "yes")
+
+#Criando os vetores das respotas do Sim e Não
+vetorsim <- masc_sim$score
+vetornao <- masc_nao$score
+
+#Calculando a média da Base Sim e Não
+media_sim <- mean(vetorsim)
+media_nao <- mean(vetornao)
+
+#Calculando o desvio padrão da Base Sim e Não
+sd_sim <- sd(vetorsim)
+sd_nao <- sd(vetornao)
+
+#Calculando o d observado
+d_obs = (media_sim - media_nao)/sqrt((sd_sim^2 +sd_nao^2)/2)
+d_obs
+
+#Criando o vetores vazio para salvar os resultados do Bootstrap
+media_sim_BS <- vector()
+media_nao_BS <- vector()
+sd_sim_BS <- vector()
+sd_nao_BS <- vector()
+
+#Calculando o BootStrap
+for(i in 1:10000){
+  vetorsim_BS <- sample(vetorsim, length(vetorsim), replace = TRUE)
+  vetornao_BS <- sample(vetornao, length(vetornao), replace = TRUE)
+  media_sim_BS[i] <- mean(vetorsim_BS)
+  media_nao_BS[i] <- mean(vetornao_BS)
+  sd_sim_BS[i] <- sd(vetorsim_BS)
+  sd_nao_BS[i] <- sd(vetornao_BS)
+}
+
+hip_cohen <- (media_sim_BS - media_nao_BS)/sqrt((sd_sim_BS^2 +sd_nao_BS^2)/2)
+
+#Calculando o IC Cohen
+IC_cohen_BS <- quantile(hip_cohen, c(0.025 , 0.975))
+IC_cohen_BS
+
+#Calculando o IC TOST
+IC_TOST_BS <- quantile(hip_cohen, c(0.05 , 0.95))
+IC_TOST_BS
+
+dados <- data.frame(
+  x = c(1, 2, 3, 4),
+  lower_ci1 = c(-0.001073063, -0.009485337, -0.3161242, -0.34143030),
+  upper_ci1 = c(0.090372439, 0.099499131,  -0.0623452, -0.03676161)
+)
+
+# Ajustando o texto dos rotulos da barra de erro.
+interval_labels1 <- c("TOST \n 90% IC", "Prosocial behavior\n d = 0.0447\nt-test (two-tialed)\n 95% IC", "", "")
+interval_labels2 <- c("", "", "TOST \n 90% IC", "Perceived Identifiability\n d = - 0.188\n t-test (two-tialed)\n 95% IC")
+
+# Criar o gráfico com os intervalos de confiança e eixos girados
+grafico <- ggplot(dados) +
+  scale_y_continuous(limits = c(-0.4, 0.4), breaks = c(-0.2, 0, 0.2)) +
+  labs(x = "", y = "Standardized mean difference (Cohen's d)") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.title.y = element_blank(),  #Removendo o titulo do eixo y
+        axis.text.y = element_blank(),   #Removendo os rótulos do eixo y
+        axis.ticks.y = element_blank(),
+        axis.line.x.bottom = element_line(size = 1.5),
+        #Ajustando as margens do gráfico
+        plot.margin = margin(t = 10, r = 10, b = 10, l = 10)) +  
+  theme(panel.grid = element_blank()) +
+  coord_flip() +
+  #Adicionando o fundo cinza
+  geom_rect(aes(xmin = 0, xmax = 5, ymin = -0.2, ymax = 0.2), fill = "gray", alpha = 0.6) + 
+  
+  #Adicionando o fundo cinza
+  geom_rect(aes(xmin = 0, xmax = 5, ymin = -0.25, ymax = -0.2), fill = "gray", alpha = 0.2) + 
+  geom_rect(aes(xmin = 0, xmax = 5, ymin = 0.2, ymax = 0.25), fill = "gray", alpha = 0.2) +
+  geom_segment(aes(x = x, xend = x, y = lower_ci1, yend = upper_ci1), color = "black", linewidth = 1.5) +
+  
+  #Adicionando barras de erro no gráfico  
+  geom_errorbar(aes(x = x, ymin = lower_ci1, ymax = upper_ci1), color = "black", width = 0.1, position = position_dodge(width = 0.025)) +
+  
+  #Adicionando a linha tracejada preta no zero
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +  
+  
+  #Alinhando rótulos com barras de erro menores
+  geom_text(aes(x = x - 0.15, y = lower_ci1 - 0.03, label = round(lower_ci1, 3)), vjust = 0, position = position_dodge(width = 0.025), color = "black") +  
+  
+  #Alinhando rótulos com barras de erro maiores 
+  geom_text(aes(x = x - 0.15, y = upper_ci1 + 0.03, label = round(upper_ci1, 3)), vjust = 0, position = position_dodge(width = 0.025), color = "black") +   
+  
+  # Adicionando rótulos com uma fonte maior  
+  geom_text(aes(x = x - 0.4, y = lower_ci1 - 0.25, label = interval_labels1), vjust = 0, position = position_dodge(width = 0.025), color = "black", size = 5) +      
+  # Adicionando rótulos com uma fonte maior  
+  geom_text(aes(x = x - 0.15, y = upper_ci1 + 0.2, label = interval_labels2), vjust = 0, position = position_dodge(width = 0.025), color = "black", size = 5)         
+  # Mostrar o gráfico
+  print(grafico)
+```
+
+
+**Figura original feita pelo autor do artigo**   
+![foto_est](41598_2022_17248_Fig3_HTML.png){width=75%}  
+**Analogia**   
+Ao compararmos os valores da pesquisa original, observamos uma notável semelhança entre os resultados obtidos, sendo eles os IC e d. Além disso, a representação gráfica construída  se iguala à figura original. Um ponto a se acrescentar nesse pós-processamento é que o intervalo IC TOST 90% que o autor coloca na escrita do grafico na condiz com o representado não figura, sendo o intervalo correto [-0.32, -0.06].
+
